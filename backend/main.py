@@ -14,11 +14,12 @@ import assemblyai as aai
 import pytz
 from google import genai
 from google.genai import types
+import string
 
 # Load environment variables
 load_dotenv()
 
-# Logging
+# Setup logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -78,45 +79,10 @@ def add_message_to_history(session_id, role, text):
         chat_history_store[session_id] = []
     chat_history_store[session_id].append({"role": role, "text": text})
 
-def build_gemini_contents(session_id):
-    history = get_chat_history(session_id)
-    contents = []
-    for msg in history:
-        contents.append({"role": msg["role"], "parts": [{"text": msg["text"]}]})
-    return contents
-
-weather_function = {
-    "name": "get_current_temperature",
-    "description": "Gets the current temperature and weather description for a given location.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "location": {
-                "type": "string",
-                "description": "The city name, e.g. London",
-            },
-        },
-        "required": ["location"],
-    },
-}
-india_datetime_function = {
-    "name": "get_india_datetime",
-    "description": "Gets the current date and time in India timezone.",
-    "parameters": {"type": "object", "properties": {}, "required": []},
-}
-london_datetime_function = {
-    "name": "get_london_datetime",
-    "description": "Gets the current date and time in London timezone.",
-    "parameters": {"type": "object", "properties": {}, "required": []},
-}
-
-import string
-
 def extract_location(text: str) -> str | None:
     doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "GPE":
-            # Remove trailing punctuation from city name
             return ent.text.strip(string.punctuation)
     # Fallback: extract after 'of'
     words = text.split()
@@ -124,8 +90,6 @@ def extract_location(text: str) -> str | None:
         if word.lower() == "of" and i + 1 < len(words):
             return words[i + 1].strip(string.punctuation)
     return None
-
-
 
 async def get_current_temperature(location: str, api_key: str) -> dict:
     indian_cities = {
@@ -189,26 +153,27 @@ async def chat_with_history(
 
     aai.settings.api_key = assemblyai_key
     transcriber = aai.Transcriber()
-
     with tempfile.NamedTemporaryFile(dir=UPLOADS_DIR, suffix=".wav", delete=False) as temp_audio:
         shutil.copyfileobj(file.file, temp_audio)
         temp_path = temp_audio.name
-    logger.debug(f"Saved uploaded audio to {temp_path}")
 
+    logger.debug(f"Saved uploaded audio to {temp_path}")
     try:
         transcript = transcriber.transcribe(temp_path)
         if transcript.error or not transcript.text or not transcript.text.strip():
             raise HTTPException(status_code=400, detail=f"Transcription error: {transcript.error or 'Empty text'}")
+
         user_text = transcript.text.strip()
         logger.debug(f"Transcript: {user_text}")
-
         add_message_to_history(session_id, "user", user_text)
 
+        # Check if weather query
         if "weather" in user_text.lower():
             city = extract_location(user_text)
             if not city:
                 city = "Delhi"
             weather = await get_current_temperature(city, weather_key)
+
             if "error" in weather:
                 display = f"Weather data for {city.title()} is unavailable."
             else:
@@ -218,6 +183,7 @@ async def chat_with_history(
                     f"Humidity: {weather['humidity']}%. "
                     f"Wind speed: {weather['wind_speed']:.1f} m/s."
                 )
+
             add_message_to_history(session_id, "model", display)
 
             audio_url = None
@@ -235,37 +201,17 @@ async def chat_with_history(
 
             return {"user_text": user_text, "llm_text": display, "audio_url": audio_url}
 
+        # If not a weather query, send to Gemini for general response
         client = genai.Client(api_key=gemini_key)
-        tools = types.Tool(function_declarations=[weather_function, india_datetime_function, london_datetime_function])
-        config = types.GenerateContentConfig(tools=[tools], temperature=0.5)  # Higher temperature for flexibility
-        contents = [{"role": "model", "parts": [{"text": PERSONA_PROMPT}]}] + build_gemini_contents(session_id)
+        contents = [{"role": "model", "parts": [{"text": PERSONA_PROMPT}]}] + get_chat_history(session_id)
         contents.append({"role": "user", "parts": [{"text": user_text}]})
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash", contents=contents, config=config
+            model="gemini-2.5-flash", contents=contents
         )
 
         first_part = response.candidates[0].content.parts[0]
-        if first_part.function_call:
-            fn_call = first_part.function_call
-            args = fn_call.args or {}
-            if fn_call.name == "get_current_temperature":
-                result = await get_current_temperature(**args, api_key=weather_key)
-            elif fn_call.name == "get_india_datetime":
-                result = get_india_datetime()
-            elif fn_call.name == "get_london_datetime":
-                result = get_london_datetime()
-            else:
-                result = {"error": "Unknown function"}
-            function_response_part = types.Part.from_function_response(name=fn_call.name, response=result)
-            contents.append(response.candidates[0].content)
-            contents.append(types.Content(role="user", parts=[function_response_part]))
-            final_response = client.models.generate_content(
-                model="gemini-2.5-flash", config=config, contents=contents
-            )
-            llm_reply = final_response.text
-        else:
-            llm_reply = first_part.text
+        llm_reply = first_part.text
 
         add_message_to_history(session_id, "model", llm_reply)
         logger.debug(f"Gemini reply: {llm_reply}")
