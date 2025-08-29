@@ -46,7 +46,7 @@ for key_name, key in [
 UPLOADS_DIR = FSPath("uploads")
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-STATIC_DIR = FSPath("static")
+STATIC_DIR = FSPath(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
