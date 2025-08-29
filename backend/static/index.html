@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Voice Chat Agent - Khansaar Universe</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* left align all */
+    background-image:
+      url('/static/3d-vector-robot-chatbot-ai-600nw-2301916351.webp'),
+      radial-gradient(circle at center, #05011a 0%, #000010 80%);
+    background-size: cover, cover;
+    background-repeat: no-repeat;
+    color: #e0e0e0;
+    height: 100vh;
+  }
+
+  #api-key-config, #chat-container {
+    background: rgba(26, 32, 48, 0.95);
+    padding: 24px;
+    border-radius: 12px;
+    width: 420px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    margin-bottom: 24px;
+  }
+
+  #api-key-config h3 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 1.8em;
+    font-weight: 600;
+  }
+
+  #api-key-config label {
+    display: block;
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+
+  #api-key-config input[type="password"] {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1em;
+    color: #eee;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+
+  #api-key-config button {
+    background-color: #4aaf54;
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 18px;
+  }
+
+  #chat {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+  }
+
+  .message {
+    max-width: 75%;
+    padding: 14px 20px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    word-wrap: break-word;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .user {
+    background-color: #4aaf54;
+    align-self: flex-end;
+    color: white;
+    box-shadow: 0 2px 8px rgba(74, 175, 84, 0.5);
+    border-radius: 20px 20px 0 20px;
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .bot {
+    background-color: #394867;
+    color: white;
+    border-radius: 20px 20px 20px 0;
+    box-shadow: 0 2px 8px rgba(57, 72, 103, 0.6);
+    text-align: left;
+  }
+
+  #record-btn {
+    background: linear-gradient(45deg, #4aaf54, #3e8e41);
+    border-radius: 12px;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 14px;
+    width: 420px;
+    font-weight: 600;
+    box-shadow: 0 6px 12px rgba(74, 175, 84, 0.7);
+    margin-bottom: 16px;
+  }
+
+  #record-btn.recording {
+    background: linear-gradient(45deg, #db3d3d, #a72c2c);
+    box-shadow: 0 6px 15px rgba(219, 61, 61, 0.9);
+  }
+
+  #record-btn:hover:not(.recording) {
+    background: linear-gradient(45deg, #5bc05b, #4e993b);
+  }
+
+  audio {
+    margin-top: 8px;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  #logout-btn {
+    background: #a72c2c;
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 12px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 420px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Login Panel -->
+<div id="api-key-config">
+  <h3>Sign in with your API Keys</h3>
+  <label for="assemblyai-key">AssemblyAI Key</label>
+  <input type="password" id="assemblyai-key" placeholder="Enter AssemblyAI API Key" autocomplete="off" />
+  <label for="murf-key">Murf Key</label>
+  <input type="password" id="murf-key" placeholder="Enter Murf API Key" autocomplete="off" />
+  <label for="gemini-key">Gemini Key</label>
+  <input type="password" id="gemini-key" placeholder="Enter Gemini API Key" autocomplete="off" />
+  <label for="weather-key">Weather Key</label>
+  <input type="password" id="weather-key" placeholder="Enter Weather API Key" autocomplete="off" />
+  <button id="login-btn">Sign In</button>
+</div>
+
+<!-- Chat Interface -->
+<div id="chat-container" style="display:none;">
+  <div id="chat"></div>
+  <button id="record-btn">Start Recording 🎤</button>
+  <audio id="audio-player" style="display:none"></audio>
+  <button id="logout-btn">Sign Out</button>
+</div>
+
+<script>
+  const apiKeyConfig = document.getElementById("api-key-config");
+  const chatContainer = document.getElementById("chat-container");
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const chatDiv = document.getElementById("chat");
+  const recordBtn = document.getElementById("record-btn");
+  const audioPlayer = document.getElementById("audio-player");
+
+  let apiKeys = {};
+  let mediaRecorder;
+  let audioChunks = [];
+  let recording = false;
+  const sessionId = Date.now().toString();
+
+  // Login action
+  loginBtn.addEventListener("click", () => {
+    apiKeys = {
+      assemblyai: document.getElementById("assemblyai-key").value.trim(),
+      murf: document.getElementById("murf-key").value.trim(),
+      gemini: document.getElementById("gemini-key").value.trim(),
+      weather: document.getElementById("weather-key").value.trim(),
+    };
+
+    if (!apiKeys.assemblyai || !apiKeys.murf || !apiKeys.gemini || !apiKeys.weather) {
+      alert("Please enter all API keys.");
+      return;
+    }
+
+    apiKeyConfig.style.display = "none";  // Hide login panel
+    chatContainer.style.display = "block"; // Show chat UI
+  });
+
+  // Logout action
+  logoutBtn.addEventListener("click", () => {
+    apiKeys = {};
+    ["assemblyai-key", "murf-key", "gemini-key", "weather-key"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    chatDiv.innerHTML = "";
+    apiKeyConfig.style.display = "block";  // Show login panel
+    chatContainer.style.display = "none";  // Hide chat UI
+  });
+
+  function addMessage(text, sender = "bot", audioUrl = null) {
+    const msgDiv = document.createElement("div");
+    msgDiv.classList.add("message", sender);
+    if (audioUrl) {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = audioUrl;
+      msgDiv.appendChild(audio);
+    } else {
+      msgDiv.innerText = text;
+    }
+    chatDiv.appendChild(msgDiv);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  }
+
+  async function sendAudio(formData) {
+    for (const [key, value] of Object.entries(apiKeys)) {
+      formData.append(`${key}_api_key`, value);
+    }
+
+    const response = await fetch(`/agent/chat/${sessionId}`, {
+      method: "POST",
+      body: formData,
+    });
+    return response;
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices) {
+      alert("Your browser does not support audio recording.");
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.addEventListener("dataavailable", e => {
+      audioChunks.push(e.data);
+    });
+    mediaRecorder.addEventListener("stop", async () => {
+      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+      const formData = new FormData();
+      formData.append("file", audioBlob, "recording.wav");
+
+      recordBtn.disabled = true;
+      recordBtn.innerText = "Processing...";
+
+      try {
+        const response = await sendAudio(formData);
+        if (!response.ok) throw new Error("Backend error");
+        const data = await response.json();
+
+        addMessage(data.user_text, "user");
+        addMessage(data.llm_text, "bot");
+        addMessage("", "bot", data.audio_url);
+
+        audioPlayer.src = data.audio_url;
+        audioPlayer.play();
+        audioPlayer.onended = () => {
+          recordBtn.disabled = false;
+          recordBtn.innerText = "Start Recording 🎤";
+        };
+      } catch (error) {
+        addMessage(`Error: ${error.message}`, "bot");
+        recordBtn.disabled = false;
+        recordBtn.innerText = "Start Recording 🎤";
+      }
+    });
+
+    mediaRecorder.start();
+    recording = true;
+    recordBtn.innerText = "Stop Recording 🔴";
+    recordBtn.classList.add("recording");
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && recording) {
+      mediaRecorder.stop();
+      recording = false;
+      recordBtn.classList.remove("recording");
+    }
+  }
+
+  recordBtn.addEventListener("click", () => {
+    if (recording) stopRecording();
+    else startRecording();
+  });
+</script>
+
+</body>
+</html>
