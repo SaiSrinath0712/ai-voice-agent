@@ -79,6 +79,18 @@ def add_message_to_history(session_id, role, text):
         chat_history_store[session_id] = []
     chat_history_store[session_id].append({"role": role, "text": text})
 
+def build_gemini_contents(session_id):
+    history = get_chat_history(session_id)
+    contents = []
+    for msg in history:
+        contents.append(
+            types.Content(
+                role=msg["role"],
+                parts=[types.Part(text=msg["text"])]
+            )
+        )
+    return contents
+
 def extract_location(text: str) -> str | None:
     doc = nlp(text)
     for ent in doc.ents:
@@ -203,8 +215,8 @@ async def chat_with_history(
 
         # If not a weather query, send to Gemini for general response
         client = genai.Client(api_key=gemini_key)
-        contents = [{"role": "model", "parts": [{"text": PERSONA_PROMPT}]}] + get_chat_history(session_id)
-        contents.append({"role": "user", "parts": [{"text": user_text}]})
+        contents = [types.Content(role="model", parts=[types.Part(text=PERSONA_PROMPT)])] + build_gemini_contents(session_id)
+        contents.append(types.Content(role="user", parts=[types.Part(text=user_text)]))
 
         response = client.models.generate_content(
             model="gemini-2.5-flash", contents=contents
