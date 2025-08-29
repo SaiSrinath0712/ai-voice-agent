@@ -6,3 +6,4 @@ spacy
 assemblyai
 pytz
 google-genai    
+python-multipart
