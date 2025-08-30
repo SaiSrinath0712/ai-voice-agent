@@ -17,7 +17,8 @@ Audio Playback: Synthesized speech plays back responses directly in the browser.
 Session Chat History: Maintains conversation context for each chat session.
 
 
-##Technology Stack
+## Technology Stack
+
 Layer	Tool/Service	Purpose
 Frontend	HTML, CSS, JavaScript	UI, audio recording & playback
 Backend	FastAPI	API server & logic handling
@@ -26,8 +27,8 @@ Language Model	Gemini (Google)	Generate context-aware replies
 Speech-to-Text	AssemblyAI	Convert speech input to text
 Text-to-Speech	Murf	Convert replies to audio
 Weather Data	OpenWeatherMap	Provide live weather information
-Getting Started
-Prerequisites
+## Getting Started
+### Prerequisites
 Python 3.10+
 
 API keys from:
@@ -40,10 +41,10 @@ Gemini
 
 OpenWeatherMap
 
-Installation
+### Installation
 Clone the repository:
 
-bash
+```bash
 git clone https://github.com/YOUR-USERNAME/ai-voice-agent.git
 cd ai-voice-agent
 Install dependencies:
