@@ -46,7 +46,7 @@ OpenWeatherMap
 Clone the repository:
 
 bash
-git clone https://github.com/YOUR-USERNAME/ai-voice-agent.git
+git clone https://github.com/SaiSrinath0712/ai-voice-agent
 cd ai-voice-agent
 
 Install dependencies:
@@ -102,7 +102,9 @@ ai-voice-agent/
 ├── uploads/          # Temporary audio storage
 ├── README.md         # Project documentation
 ├── .env              # Environment variables (not in repo)
-Additional Information
+---
+
+## Additional Information
 Persona “Deva” ensures calm and authoritative responses.
 
 SpaCy NLP detects location entities from queries.
