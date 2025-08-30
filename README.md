@@ -1,6 +1,6 @@
 # AI Voice Chat Agent – Khansaar Universe
 An intelligent AI voice assistant that interacts using spoken queries with real-time responses, powered by AssemblyAI, Gemini, Murf, and OpenWeatherMap APIs.
-
+---
 ## Features
 Voice-Enabled Chat: Record your voice via browser, and the system transcribes and responds intelligently.
 
@@ -27,6 +27,7 @@ Language Model	Gemini (Google)	Generate context-aware replies
 Speech-to-Text	AssemblyAI	Convert speech input to text
 Text-to-Speech	Murf	Convert replies to audio
 Weather Data	OpenWeatherMap	Provide live weather information
+---
 ## Getting Started
 ### Prerequisites
 Python 3.10+
@@ -41,17 +42,19 @@ Gemini
 
 OpenWeatherMap
 
-## Installation
+### Installation
 Clone the repository:
 
-```bash
+bash
 git clone https://github.com/YOUR-USERNAME/ai-voice-agent.git
 cd ai-voice-agent
 
-## Install dependencies:
-```bash
+Install dependencies:
+bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+
+
 Set up environment variables in .env file:
 
 text
@@ -67,7 +70,7 @@ Open your browser at:
 
 text
 http://localhost:8000/
-Usage
+## Usage
 Enter your API keys on the login page.
 
 Click Start Recording 🎤 to ask your query.
@@ -78,17 +81,20 @@ Ask for weather updates by mentioning locations.
 
 Click Sign Out to clear your session data.
 
-API Endpoints
-POST /agent/chat/{session_id}
+## API Endpoints
+- `POST /agent/chat/{session_id}`
 Accepts audio file and API keys, returns transcription, AI reply, and speech audio URL.
 
-GET /
+- `GET /`
 Serves the chat UI (index.html).
 
-GET /favicon.ico
+- `GET /favicon.ico`
 Serves the favicon.
 
-Project Structure
+---
+
+
+## Project Structure
 text
 ai-voice-agent/
 ├── main.py           # Backend API and logic
