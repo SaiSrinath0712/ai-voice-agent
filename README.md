@@ -41,15 +41,15 @@ Gemini
 
 OpenWeatherMap
 
-### Installation
+## Installation
 Clone the repository:
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/ai-voice-agent.git
 cd ai-voice-agent
-Install dependencies:
 
-bash
+## Install dependencies:
+```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 Set up environment variables in .env file:
