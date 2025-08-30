@@ -1,114 +1,107 @@
 # AI Voice Chat Agent – Khansaar Universe
-An intelligent AI voice assistant that interacts using spoken queries with real-time responses, powered by AssemblyAI, Gemini, Murf, and OpenWeatherMap APIs.
+
+An intelligent AI voice assistant that interacts with users through spoken queries, providing real-time responses powered by AssemblyAI, Gemini, Murf, and OpenWeatherMap APIs.
 ---
+
 ## Features
-Voice-Enabled Chat: Record your voice via browser, and the system transcribes and responds intelligently.
 
-Multi-API Integration: Uses AssemblyAI (speech-to-text), Gemini (LLM responses), Murf (text-to-speech), and OpenWeatherMap (weather info).
-
-Customizable API Keys: Enter your own keys or fallback on server environment keys.
-
-Persona-Driven Responses: Replies are delivered in a calm, authoritative voice persona named “Deva.”
-
-Weather Awareness: Recognizes location keywords and fetches live weather updates.
-
-Audio Playback: Synthesized speech plays back responses directly in the browser.
-
-Session Chat History: Maintains conversation context for each chat session.
-
+- **Voice-Enabled Chat:** Users speak directly to the app; speech is transcribed and understood.
+- **Multi-API Integration:** Combines AssemblyAI (speech-to-text), Gemini (LLM), Murf (text-to-speech), and OpenWeatherMap (live weather data).
+- **Customizable API Keys:** Users can input their own keys or fallback to server-stored keys.
+- **Persona-Driven Replies:** The assistant speaks as “Deva,” a calm and authoritative persona.
+- **Weather Awareness:** Detects mentioned locations and provides live weather updates.
+- **Audio Playback:** Synthesized responses play back within the browser.
+- **Session-Based Chat History:** Maintains context for ongoing conversations.
+---
 
 ## Technology Stack
 
-Layer	Tool/Service	Purpose
-Frontend	HTML, CSS, JavaScript	UI, audio recording & playback
-Backend	FastAPI	API server & logic handling
-NLP	spaCy	Entity extraction (locations)
-Language Model	Gemini (Google)	Generate context-aware replies
-Speech-to-Text	AssemblyAI	Convert speech input to text
-Text-to-Speech	Murf	Convert replies to audio
-Weather Data	OpenWeatherMap	Provide live weather information
+| Layer          | Tool/Service         | Purpose                          |
+|----------------|---------------------|---------------------------------|
+| Frontend       | HTML, CSS, JavaScript | UI, voice recording & playback  |
+| Backend        | FastAPI             | API server and business logic   |
+| NLP            | spaCy               | Location entity recognition     |
+| Language Model | Gemini (Google)     | Context-aware replies           |
+| Speech-to-Text | AssemblyAI          | Transcribe user speech          |
+| Text-to-Speech | Murf                | Generate audio responses        |
+| Weather Data   | OpenWeatherMap      | Fetch live weather information  |
 ---
+
 ## Getting Started
+
 ### Prerequisites
-Python 3.10+
 
-API keys from:
-
-AssemblyAI
-
-Murf
-
-Gemini
-
-OpenWeatherMap
+- Python 3.10 or higher
+- API keys for:
+  - AssemblyAI
+  - Murf
+  - Gemini
+  - OpenWeatherMap
 
 ### Installation
-Clone the repository:
 
-bash
-git clone https://github.com/SaiSrinath0712/ai-voice-agent
+1. Clone the repository:
+git clone  https://github.com/SaiSrinath0712/ai-voice-agent
 cd ai-voice-agent
 
-Install dependencies:
-bash
+2. Install Python dependencies:
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 
-
-Set up environment variables in .env file:
-
-text
+3. Set up environment variables in `.env` file:
 ASSEMBLYAI_API_KEY=your_assemblyai_key
 MURF_API_KEY=your_murf_key
 GEMINI_API_KEY=your_gemini_key
 WEATHER_API_KEY=your_openweather_key
-Start the backend server:
 
-bash
+4. Start the backend server:
 uvicorn main:app --reload
-Open your browser at:
 
-text
+5. Open your browser and visit:
 http://localhost:8000/
+---
 ## Usage
-Enter your API keys on the login page.
 
-Click Start Recording 🎤 to ask your query.
-
-View responses as text and listen to audio playback.
-
-Ask for weather updates by mentioning locations.
-
-Click Sign Out to clear your session data.
+- Enter your API keys on the login page.
+- Click **Start Recording 🎤** and speak your query.
+- Receive both text and audio responses.
+- Ask for weather updates by mentioning city names.
+- Use **Sign Out** to clear session data and keys.
+---
 
 ## API Endpoints
-- `POST /agent/chat/{session_id}`
-Accepts audio file and API keys, returns transcription, AI reply, and speech audio URL.
 
-- `GET /`
-Serves the chat UI (index.html).
+- `POST /agent/chat/{session_id}`  
+Accepts an audio file and API keys, returns transcription, AI response, and TTS audio URL.
 
-- `GET /favicon.ico`
+- `GET /`  
+Serves the main chat UI (index.html).
+
+- `GET /favicon.ico`  
 Serves the favicon.
-
 ---
-
 
 ## Project Structure
-text
+
 ai-voice-agent/
-├── main.py           # Backend API and logic
-├── static/           # Frontend HTML, CSS, JS assets
-├── uploads/          # Temporary audio storage
-├── README.md         # Project documentation
-├── .env              # Environment variables (not in repo)
+├── main.py # Backend API and logic
+├── static/ # Frontend assets (HTML, CSS, JS)
+├── uploads/ # Temporary audio file storage
+├── README.md # This documentation file
+├── .env # Environment variable file (not committed to repo)
+
+---
+## Additional Information
+
+- The AI persona “Deva” ensures calm and precise replies.
+- The spaCy NLP model detects locations mentioned in queries for weather.
+- API keys are handled securely; no permanent storage on client.
+- Sessions maintain conversation context for a smooth chat experience.
 ---
 
-## Additional Information
-Persona “Deva” ensures calm and authoritative responses.
+## Contributing
 
-SpaCy NLP detects location entities from queries.
+Contributions and feedback are welcome! Please open issues or submit pull requests on GitHub to improve the project.
+---
 
-Secure handling of API keys; no keys stored permanently on client.
 
-Session-based history supports conversational context.
