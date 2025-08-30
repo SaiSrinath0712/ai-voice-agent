@@ -83,12 +83,12 @@ Serves the favicon.
 
 ## Project Structure
 
-ai-voice-agent/
+<pre> ```ai-voice-agent/
 ├── main.py # Backend API and logic
 ├── static/ # Frontend assets (HTML, CSS, JS)
 ├── uploads/ # Temporary audio file storage
 ├── README.md # This documentation file
-├── .env # Environment variable file (not committed to repo)
+├── .env # Environment variable file (not committed to repo)``` </pre> 
 
 ---
 ## Additional Information
