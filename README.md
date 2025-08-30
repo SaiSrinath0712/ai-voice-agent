@@ -1,5 +1,6 @@
 # AI Voice Chat Agent – Khansaar Universe
 An intelligent AI voice assistant that interacts using spoken queries with real-time responses, powered by AssemblyAI, Gemini, Murf, and OpenWeatherMap APIs.
+
 ## Features
 Voice-Enabled Chat: Record your voice via browser, and the system transcribes and responds intelligently.
 
@@ -16,7 +17,7 @@ Audio Playback: Synthesized speech plays back responses directly in the browser.
 Session Chat History: Maintains conversation context for each chat session.
 
 
-Technology Stack
+##Technology Stack
 Layer	Tool/Service	Purpose
 Frontend	HTML, CSS, JavaScript	UI, audio recording & playback
 Backend	FastAPI	API server & logic handling
