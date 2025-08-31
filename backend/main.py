@@ -91,7 +91,7 @@ def build_gemini_contents(session_id):
         )
     return contents
 
-def extract_location(text: str) -> str | None:
+def extract_location(text: str) -> str or None:
     doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "GPE":
@@ -148,6 +148,14 @@ def get_london_datetime() -> dict:
     dt_string = now_london.strftime("%Y-%m-%d %H:%M:%S %Z")
     return {"datetime": dt_string}
 
+def is_date_or_time_query(text: str) -> bool:
+    text_lower = text.lower()
+    keywords = [
+        "date", "time", "current date", "current time", "today's date",
+        "now in", "what time", "what date", "present time", "local time"
+    ]
+    return any(key in text_lower for key in keywords)
+
 @app.post("/agent/chat/{session_id}")
 async def chat_with_history(
     session_id: str = ApiPath(...),
@@ -157,7 +165,6 @@ async def chat_with_history(
     gemini_api_key: str = Form(None),
     weather_api_key: str = Form(None),
 ):
-    # Use user provided keys or fallback to environment keys
     assemblyai_key = assemblyai_api_key or ASSEMBLYAI_API_KEY
     murf_key = murf_api_key or MURF_API_KEY
     gemini_key = gemini_api_key or GEMINI_API_KEY
@@ -179,13 +186,12 @@ async def chat_with_history(
         logger.debug(f"Transcript: {user_text}")
         add_message_to_history(session_id, "user", user_text)
 
-        # Check if weather query
+        # Weather query branch
         if "weather" in user_text.lower():
             city = extract_location(user_text)
             if not city:
                 city = "Delhi"
             weather = await get_current_temperature(city, weather_key)
-
             if "error" in weather:
                 display = f"Weather data for {city.title()} is unavailable."
             else:
@@ -195,7 +201,6 @@ async def chat_with_history(
                     f"Humidity: {weather['humidity']}%. "
                     f"Wind speed: {weather['wind_speed']:.1f} m/s."
                 )
-
             add_message_to_history(session_id, "model", display)
 
             audio_url = None
@@ -210,10 +215,41 @@ async def chat_with_history(
                     audio_url = resp.json().get("audioFile") or resp.json().get("audio_url")
             except Exception as e:
                 logger.warning(f"Murf TTS failed for weather: {e}")
-
             return {"user_text": user_text, "llm_text": display, "audio_url": audio_url}
 
-        # If not a weather query, send to Gemini for general response
+        # DATE/TIME HANDLING: Intercept these queries and answer correctly!
+        if is_date_or_time_query(user_text):
+            text_lower = user_text.lower()
+            # Find which location, if any
+            if "london" in text_lower:
+                dt = get_london_datetime()
+                display = f"The current date and time in London is {dt['datetime']}."
+            elif "india" in text_lower or "delhi" in text_lower:
+                dt = get_india_datetime()
+                display = f"The current date and time in India is {dt['datetime']}."
+            else:
+                dt_india = get_india_datetime()['datetime']
+                dt_london = get_london_datetime()['datetime']
+                display = (
+                    f"India: {dt_india}\n"
+                    f"London: {dt_london}"
+                )
+            add_message_to_history(session_id, "model", display)
+            audio_url = None
+            try:
+                async with httpx.AsyncClient(timeout=60) as client:
+                    resp = await client.post(
+                        "https://api.murf.ai/v1/speech/generate",
+                        json={"text": display, "voice_id": "en-US-marcus", "audio_format": "mp3"},
+                        headers={"api-key": murf_key, "Content-Type": "application/json"},
+                    )
+                    resp.raise_for_status()
+                    audio_url = resp.json().get("audioFile") or resp.json().get("audio_url")
+            except Exception as e:
+                logger.warning(f"Murf TTS failed for date/time: {e}")
+            return {"user_text": user_text, "llm_text": display, "audio_url": audio_url}
+
+        # Otherwise, send to Gemini
         client = genai.Client(api_key=gemini_key)
         contents = [types.Content(role="model", parts=[types.Part(text=PERSONA_PROMPT)])] + build_gemini_contents(session_id)
         contents.append(types.Content(role="user", parts=[types.Part(text=user_text)]))
